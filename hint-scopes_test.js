@@ -94,7 +94,22 @@ describe('ngHintScopes', function() {
       jasmine.Clock.useMock();
     });
 
-    it('should fire when a watched model changes', function() {
+    it('should emit when registering a watch', function() {
+      hint.watch(scope.$id, 'a.b.c');
+      jasmine.Clock.tick(10);
+
+      expect(hint.emit).toHaveBeenCalled();
+      var args = getArgsOfNthCall(2);
+      expect(args[0]).toBe('model:change');
+
+      expect(args[1]).toEqual({
+        id : scope.$id,
+        path : 'a.b.c',
+        value : 1
+      });
+    });
+
+    it('should emit when a watched model changes', function() {
       hint.watch(scope.$id, 'a.b.c');
       scope.a.b.c = 2;
       scope.$digest();
@@ -102,7 +117,7 @@ describe('ngHintScopes', function() {
       jasmine.Clock.tick(10);
 
       expect(hint.emit).toHaveBeenCalled();
-      var args = getArgsOfNthCall(1);
+      var args = getArgsOfNthCall(4);
       expect(args[0]).toBe('model:change');
 
       expect(args[1]).toEqual({
@@ -111,8 +126,8 @@ describe('ngHintScopes', function() {
         oldValue: 1,
         value : 2
       });
-
     });
+
   });
 });
 

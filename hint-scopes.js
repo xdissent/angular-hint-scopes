@@ -14,6 +14,8 @@ function decorateRootScope($delegate, $parse) {
   var scopes = {},
       watching = {};
 
+  var debouncedEmitModelChange = debounceOn(10, emitModelChange, byScopeId);
+
   hint.watch = function (scopeId, path) {
     path = typeof path === 'string' ? path.split('.') : path;
 
@@ -25,10 +27,16 @@ function decorateRootScope($delegate, $parse) {
       var partialPath = path.slice(0, i).join('.');
       if (!watching[scopeId][partialPath]) {
         var get = gettterer(scopeId, partialPath);
+        var value = get();
         watching[scopeId][partialPath] = {
           get: get,
-          value: get()
+          value: value
         };
+        hint.emit('model:change', {
+          id: scopeId,
+          path: partialPath,
+          value: value
+        });
       }
     }
   };
@@ -117,7 +125,6 @@ function decorateRootScope($delegate, $parse) {
   };
 
 
-  var debouncedEmitModelChange = debounceOn(10, emitModelChange, byScopeId);
   var _digest = scopePrototype.$digest;
   scopePrototype.$digest = function (fn) {
     var start = performance.now();
