@@ -1,0 +1,32 @@
+{
+  "name": "angular-hint-scopes",
+  "version": "0.0.0",
+  "description": "get notified about scope changes",
+  "main": "hint-scopes.js",
+  "devDependencies": {
+    "browserify": "^4.2.1",
+    "gulp": "^3.8.6",
+    "karma": "0.12.16",
+    "karma-bro": "^0.6.0",
+    "karma-coverage": "~0.1.4",
+    "karma-firefox-launcher": "~0.1.0",
+    "karma-jasmine": "0.1.5",
+    "karma-sauce-launcher": "^0.2.9",
+    "vinyl-source-stream": "^0.1.1",
+    "watchify": "^0.10.2"
+  },
+  "scripts": {
+    "test": "karma start karma-sauce.conf.js"
+  },
+  "keywords": [
+    "angular",
+    "hint",
+    "scope",
+    "introspection"
+  ],
+  "author": "Brian Ford <btford@umich.edu>",
+  "license": "apache 2",
+  "dependencies": {
+    "angular-hint-log": ">=0.4.0"
+  }
+}

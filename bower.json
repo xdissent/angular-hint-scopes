@@ -1,0 +1,21 @@
+{
+  "name": "angular-hint-scopes",
+  "version": "0.0.0",
+  "authors": [
+    "Brian Ford <btford@umich.edu>"
+  ],
+  "main": "hint-scopes.js",
+  "keywords": [
+    "angular"
+  ],
+  "license": "Apache 2.0",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "*_test.js"
+  ],
+  "dependencies": {
+    "angular-mocks": "~1.2.25"
+  }
+}
