@@ -27,6 +27,7 @@
   "author": "Brian Ford <btford@umich.edu>",
   "license": "apache 2",
   "dependencies": {
-    "angular-hint-log": ">=0.4.0"
+    "angular-hint-log": ">=0.4.0",
+    "debounce-on": "0.0.0"
   }
 }

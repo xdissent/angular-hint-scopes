@@ -1,3 +1,5 @@
+'use strict';
+
 var hint = angular.hint;
 describe('ngHintScopes', function() {
 
@@ -21,8 +23,9 @@ describe('ngHintScopes', function() {
       $rootScope.$watch('hi');
       $rootScope.$apply();
 
-      var args = getArgsOfNthCall(0);
       expect(hint.emit).toHaveBeenCalled();
+      var args = getArgsOfNthCall(0);
+
       expect(args[0]).toBe('scope:watch');
       expect(args[1].scope).toBe($rootScope);
     });
@@ -72,11 +75,43 @@ describe('ngHintScopes', function() {
 
       scope.$apply();
 
+      expect(hint.emit).toHaveBeenCalled();
       var args = hint.emit.calls[1].args;
 
       expect(args[0]).toBe('scope:apply');
       expect(args[1].scope).toBe(scope);
       expect(args[1].time).toBeDefined();
+    });
+  });
+
+  describe('hint.watch', function() {
+    var scope;
+
+    beforeEach(function () {
+      scope = $rootScope.$new();
+      scope.a = { b: { c: 1 } };
+      spyOn(hint, 'emit');
+      jasmine.Clock.useMock();
+    });
+
+    it('should fire when a watched model changes', function() {
+      hint.watch(scope.$id, 'a.b.c');
+      scope.a.b.c = 2;
+      scope.$digest();
+
+      jasmine.Clock.tick(10);
+
+      expect(hint.emit).toHaveBeenCalled();
+      var args = getArgsOfNthCall(1);
+      expect(args[0]).toBe('model:change');
+
+      expect(args[1]).toEqual({
+        id : scope.$id,
+        path : 'a.b.c',
+        oldValue: 1,
+        value : 2
+      });
+
     });
   });
 });

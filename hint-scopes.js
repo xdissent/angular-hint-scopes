@@ -1,14 +1,43 @@
 'use strict';
 
 var hint = angular.hint = require('angular-hint-log');
+var debounceOn = require('debounce-on');
 
 hint.emit = function () {};
 
 module.exports = angular.module('ngHintScopes', []).config(['$provide', function ($provide) {
-  $provide.decorator('$rootScope', ['$delegate', decorateRootScope]);
+  $provide.decorator('$rootScope', ['$delegate', '$parse', decorateRootScope]);
 }]);
 
-function decorateRootScope($delegate) {
+function decorateRootScope($delegate, $parse) {
+
+  var scopes = {},
+      watching = {};
+
+  hint.watch = function (scopeId, path) {
+    path = typeof path === 'string' ? path.split('.') : path;
+
+    if (!watching[scopeId]) {
+      watching[scopeId] = {};
+    }
+
+    for (var i = 1, ii = path.length; i <= ii; i += 1) {
+      var partialPath = path.slice(0, i).join('.');
+      if (!watching[scopeId][partialPath]) {
+        var get = gettterer(scopeId, partialPath);
+        watching[scopeId][partialPath] = {
+          get: get,
+          value: get()
+        };
+      }
+    }
+  };
+
+
+  var debouncedEmit = debounceOn(hint.emit, 10, function (params) {
+    return params.id + params.path;
+  });
+
 
   var scopePrototype = ('getPrototypeOf' in Object) ?
       Object.getPrototypeOf($delegate) : $delegate.__proto__;
@@ -65,23 +94,37 @@ function decorateRootScope($delegate) {
 
   var _destroy = scopePrototype.$destroy;
   scopePrototype.$destroy = function () {
-    hint.emit('scope:destroy', { id: this.id });
+    var id = this.id;
+
+    hint.emit('scope:destroy', { id: id });
+
+    delete scopes[id];
+    delete watching[id];
+
     return _destroy.apply(this, arguments);
   };
 
 
   var _new = scopePrototype.$new;
   scopePrototype.$new = function () {
-    var ret = _new.apply(this, arguments);
-    hint.emit('scope:new', { parent: this, child: ret });
-    return ret;
+    var child = _new.apply(this, arguments);
+
+    scopes[child.$id] = child;
+    watching[child.$id] = {};
+
+    hint.emit('scope:new', { parent: this, child: child });
+    return child;
   };
 
 
+  var debouncedEmitModelChange = debounceOn(10, emitModelChange, byScopeId);
   var _digest = scopePrototype.$digest;
   scopePrototype.$digest = function (fn) {
+    var start = performance.now();
     var ret = _digest.apply(this, arguments);
-    hint.emit('scope:digest', { scope: this });
+    var end = performance.now();
+    hint.emit('scope:digest', { scope: this, time: end - start });
+    debouncedEmitModelChange(this);
     return ret;
   };
 
@@ -95,7 +138,38 @@ function decorateRootScope($delegate) {
     return ret;
   };
 
+
+  function gettterer (scopeId, path) {
+    var getter = $parse(path);
+    return function () {
+      return getter(scopes[scopeId]);
+    };
+  }
+
+  function emitModelChange (scope) {
+    if (watching[scope.$id]) {
+      Object.keys(watching[scope.$id]).forEach(function (path) {
+        var model = watching[scope.$id][path];
+        var value = model.get();
+        if (value !== model.value) {
+          hint.emit('model:change', {
+            id: scope.$id,
+            path: path,
+            oldValue: model.value,
+            value: value
+          });
+          model.value = value;
+        }
+      });
+    }
+  }
+
   return $delegate;
+}
+
+
+function byScopeId (scope) {
+  return scope.$id
 }
 
 function humanReadableWatchExpression (fn) {
