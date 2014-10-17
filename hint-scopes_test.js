@@ -27,7 +27,7 @@ describe('ngHintScopes', function() {
       var args = getArgsOfNthCall(0);
 
       expect(args[0]).toBe('scope:watch');
-      expect(args[1].scope).toBe($rootScope);
+      expect(args[1].id).toBe($rootScope.$id);
     });
 
     it('should fire on digest', function() {
@@ -39,7 +39,7 @@ describe('ngHintScopes', function() {
       expect(hint.emit).toHaveBeenCalled();
       expect(args[0]).toBe('scope:watch');
       expect(args[1].watch).toBe('hi');
-      expect(args[1].scope).toBe($rootScope);
+      expect(args[1].id).toBe($rootScope.$id);
     });
   });
 
@@ -50,8 +50,8 @@ describe('ngHintScopes', function() {
       var args = getArgsOfNthCall(0);
 
       expect(args[0]).toBe('scope:new');
-      expect(args[1].parent).toBe($rootScope);
-      expect(args[1].child).toBe(scope);
+      expect(args[1].parent).toBe($rootScope.$id);
+      expect(args[1].child).toBe(scope.$id);
     });
   });
 
@@ -79,7 +79,7 @@ describe('ngHintScopes', function() {
       var args = hint.emit.calls[1].args;
 
       expect(args[0]).toBe('scope:apply');
-      expect(args[1].scope).toBe(scope);
+      expect(args[1].id).toBe(scope.$id);
       expect(args[1].time).toBeDefined();
     });
   });
@@ -99,14 +99,34 @@ describe('ngHintScopes', function() {
       jasmine.Clock.tick(10);
 
       expect(hint.emit).toHaveBeenCalled();
-      var args = getArgsOfNthCall(2);
-      expect(args[0]).toBe('model:change');
 
+      var args = getArgsOfNthCall(0);
+
+      expect(args[0]).toBe('model:change');
+      expect(args[1]).toEqual({
+        id : scope.$id,
+        path : 'a',
+        value : '{"b":{"~object":true}}'
+      });
+
+      args = getArgsOfNthCall(1);
+
+      expect(args[0]).toBe('model:change');
+      expect(args[1]).toEqual({
+        id : scope.$id,
+        path : 'a.b',
+        value : '{"c":1}'
+      });
+
+      args = getArgsOfNthCall(2);
+
+      expect(args[0]).toBe('model:change');
       expect(args[1]).toEqual({
         id : scope.$id,
         path : 'a.b.c',
         value : 1
       });
+
     });
 
     it('should emit when a watched model changes', function() {
@@ -117,7 +137,7 @@ describe('ngHintScopes', function() {
       jasmine.Clock.tick(10);
 
       expect(hint.emit).toHaveBeenCalled();
-      var args = getArgsOfNthCall(4);
+      var args = getArgsOfNthCall(5);
       expect(args[0]).toBe('model:change');
 
       expect(args[1]).toEqual({

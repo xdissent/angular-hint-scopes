@@ -1,5 +1,6 @@
 'use strict';
 
+var summarize = require('./lib/summarize-model');
 var hint = angular.hint = require('angular-hint-log');
 var debounceOn = require('debounce-on');
 
@@ -14,7 +15,7 @@ function decorateRootScope($delegate, $parse) {
   var scopes = {},
       watching = {};
 
-  var debouncedEmitModelChange = debounceOn(10, emitModelChange, byScopeId);
+  var debouncedEmitModelChange = debounceOn(emitModelChange, 10, byScopeId);
 
   hint.watch = function (scopeId, path) {
     path = typeof path === 'string' ? path.split('.') : path;
@@ -27,7 +28,7 @@ function decorateRootScope($delegate, $parse) {
       var partialPath = path.slice(0, i).join('.');
       if (!watching[scopeId][partialPath]) {
         var get = gettterer(scopeId, partialPath);
-        var value = get();
+        var value = summarize(get());
         watching[scopeId][partialPath] = {
           get: get,
           value: value
@@ -53,14 +54,14 @@ function decorateRootScope($delegate, $parse) {
   var _watch = scopePrototype.$watch;
   scopePrototype.$watch = function (watchExpression, reactionFunction) {
     var watchStr = humanReadableWatchExpression(watchExpression);
-
+    var scopeId = this.$id;
     if (typeof watchExpression === 'function') {
       arguments[0] = function () {
         var start = performance.now();
         var ret = watchExpression.apply(this, arguments);
         var end = performance.now();
         hint.emit('scope:watch', {
-          scope: this,
+          id: scopeId,
           watch: watchStr,
           time: end - start
         });
@@ -73,7 +74,7 @@ function decorateRootScope($delegate, $parse) {
         var ret = thatScope.$eval(watchExpression);
         var end = performance.now();
         hint.emit('scope:watch', {
-          scope: thatScope,
+          id: scopeId,
           watch: watchStr,
           time: end - start
         });
@@ -88,7 +89,7 @@ function decorateRootScope($delegate, $parse) {
         var ret = reactionFunction.apply(this, arguments);
         var end = performance.now();
         hint.emit('scope:reaction', {
-          scope: this,
+          id: this.$id,
           watch: watchStr,
           time: end - start
         });
@@ -120,7 +121,7 @@ function decorateRootScope($delegate, $parse) {
     scopes[child.$id] = child;
     watching[child.$id] = {};
 
-    hint.emit('scope:new', { parent: this, child: child });
+    hint.emit('scope:new', { parent: this.$id, child: child.$id });
     return child;
   };
 
@@ -130,7 +131,7 @@ function decorateRootScope($delegate, $parse) {
     var start = performance.now();
     var ret = _digest.apply(this, arguments);
     var end = performance.now();
-    hint.emit('scope:digest', { scope: this, time: end - start });
+    hint.emit('scope:digest', { id: this.$id, time: end - start });
     debouncedEmitModelChange(this);
     return ret;
   };
@@ -141,7 +142,7 @@ function decorateRootScope($delegate, $parse) {
     var start = performance.now();
     var ret = _apply.apply(this, arguments);
     var end = performance.now();
-    hint.emit('scope:apply', { scope: this, time: end - start });
+    hint.emit('scope:apply', { id: this.$id, time: end - start });
     return ret;
   };
 
@@ -157,7 +158,7 @@ function decorateRootScope($delegate, $parse) {
     if (watching[scope.$id]) {
       Object.keys(watching[scope.$id]).forEach(function (path) {
         var model = watching[scope.$id][path];
-        var value = model.get();
+        var value = summarize(model.get());
         if (value !== model.value) {
           hint.emit('model:change', {
             id: scope.$id,
@@ -173,7 +174,6 @@ function decorateRootScope($delegate, $parse) {
 
   return $delegate;
 }
-
 
 function byScopeId (scope) {
   return scope.$id
