@@ -177,7 +177,7 @@ function decorateRootScope($delegate, $parse) {
 }
 
 function byScopeId (scope) {
-  return scope.$id
+  return scope.$id;
 }
 
 function humanReadableWatchExpression (fn) {
