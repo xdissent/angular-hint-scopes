@@ -155,9 +155,10 @@ function decorateRootScope($delegate, $parse) {
   }
 
   function emitModelChange (scope) {
-    if (watching[scope.$id]) {
-      Object.keys(watching[scope.$id]).forEach(function (path) {
-        var model = watching[scope.$id][path];
+    var scopeId = scope.$id;
+    if (watching[scopeId]) {
+      Object.keys(watching[scopeId]).forEach(function (path) {
+        var model = watching[scopeId][path];
         var value = summarize(model.get());
         if (value !== model.value) {
           hint.emit('model:change', {
