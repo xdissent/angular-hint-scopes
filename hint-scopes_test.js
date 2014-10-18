@@ -132,12 +132,22 @@ describe('ngHintScopes', function() {
     it('should emit when a watched model changes', function() {
       hint.watch(scope.$id, 'a.b.c');
       scope.a.b.c = 2;
-      scope.$digest();
+      scope.$apply();
 
       jasmine.Clock.tick(10);
 
       expect(hint.emit).toHaveBeenCalled();
       var args = getArgsOfNthCall(5);
+      expect(args[0]).toBe('model:change');
+
+      expect(args[1]).toEqual({
+        id : scope.$id,
+        path : 'a.b',
+        oldValue: '{"c":1}',
+        value : '{"c":2}'
+      });
+
+      args = getArgsOfNthCall(6);
       expect(args[0]).toBe('model:change');
 
       expect(args[1]).toEqual({

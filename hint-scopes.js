@@ -132,7 +132,6 @@ function decorateRootScope($delegate, $parse) {
     var ret = _digest.apply(this, arguments);
     var end = performance.now();
     hint.emit('scope:digest', { id: this.$id, time: end - start });
-    debouncedEmitModelChange(this);
     return ret;
   };
 
@@ -143,6 +142,7 @@ function decorateRootScope($delegate, $parse) {
     var ret = _apply.apply(this, arguments);
     var end = performance.now();
     hint.emit('scope:apply', { id: this.$id, time: end - start });
+    debouncedEmitModelChange(this);
     return ret;
   };
 
