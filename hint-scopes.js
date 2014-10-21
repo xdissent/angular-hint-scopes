@@ -26,19 +26,20 @@ function decorateRootScope($delegate, $parse) {
 
     for (var i = 1, ii = path.length; i <= ii; i += 1) {
       var partialPath = path.slice(0, i).join('.');
-      if (!watching[scopeId][partialPath]) {
-        var get = gettterer(scopeId, partialPath);
-        var value = summarize(get());
-        watching[scopeId][partialPath] = {
-          get: get,
-          value: value
-        };
-        hint.emit('model:change', {
-          id: scopeId,
-          path: partialPath,
-          value: value
-        });
+      if (watching[scopeId][partialPath]) {
+        continue;
       }
+      var get = gettterer(scopeId, partialPath);
+      var value = summarize(get());
+      watching[scopeId][partialPath] = {
+        get: get,
+        value: value
+      };
+      hint.emit('model:change', {
+        id: scopeId,
+        path: partialPath,
+        value: value
+      });
     }
   };
 
@@ -148,6 +149,11 @@ function decorateRootScope($delegate, $parse) {
 
 
   function gettterer (scopeId, path) {
+    if (path === '') {
+      return function () {
+        return scopes[scopeId];
+      };
+    }
     var getter = $parse(path);
     return function () {
       return getter(scopes[scopeId]);
@@ -172,6 +178,11 @@ function decorateRootScope($delegate, $parse) {
       });
     }
   }
+
+  hint.emit('scope:new', {
+    parent: null,
+    child: $delegate.$id
+  });
 
   return $delegate;
 }
