@@ -8,6 +8,7 @@ hint.emit = function () {};
 
 module.exports = angular.module('ngHintScopes', []).config(['$provide', function ($provide) {
   $provide.decorator('$rootScope', ['$delegate', '$parse', decorateRootScope]);
+  $provide.decorator('$compile', ['$delegate', decorateDollaCompile]);
 }]);
 
 function decorateRootScope($delegate, $parse) {
@@ -43,6 +44,14 @@ function decorateRootScope($delegate, $parse) {
     }
   };
 
+  hint.unwatch = function (scopeId, unwatchPath) {
+    Object.keys(watching[scopeId]).
+      forEach(function (path) {
+        if (path.indexOf(unwatchPath) === 0) {
+          delete watching[scopeId][path];
+        }
+      });
+  };
 
   var debouncedEmit = debounceOn(hint.emit, 10, function (params) {
     return params.id + params.path;
@@ -123,8 +132,33 @@ function decorateRootScope($delegate, $parse) {
     watching[child.$id] = {};
 
     hint.emit('scope:new', { parent: this.$id, child: child.$id });
+    setTimeout(function () {
+      emitScopeElt(child.$id);
+    }, 0);
     return child;
   };
+
+  function emitScopeElt (scopeId) {
+    var elt = findElt(scopeId);
+    var descriptor = scopeDescriptor(elt);
+    hint.emit('scope:link', {
+      id: scopeId,
+      descriptor: descriptor
+    });
+  }
+
+  function findElt (scopeId) {
+    var elts = document.querySelectorAll('.ng-scope');
+    var elt, scope;
+
+    for (var i = 0; i < elts.length; i++) {
+      elt = angular.element(elts[i]);
+      scope = elt.scope();
+      if (scope.$id === scopeId) {
+        return elt;
+      }
+    }
+  }
 
 
   var _digest = scopePrototype.$digest;
@@ -183,8 +217,51 @@ function decorateRootScope($delegate, $parse) {
     parent: null,
     child: $delegate.$id
   });
+  scopes[$delegate.$id] = $delegate;
+  watching[$delegate.$id] = {};
 
   return $delegate;
+}
+
+function decorateDollaCompile ($delegate) {
+  return function () {
+    var link = $delegate.apply(this, arguments);
+
+    return function (scope) {
+      var elt = link.apply(this, arguments);
+      var descriptor = scopeDescriptor(elt, scope);
+      console.log(scope.$id, descriptor, elt);
+      hint.emit('scope:link', {
+        id: scope.$id,
+        descriptor: descriptor
+      });
+      return elt;
+    }
+  }
+}
+
+function scopeDescriptor (elt, scope) {
+  var val,
+      types = [
+        'ng-app',
+        'ng-controller',
+        'ng-repeat',
+        'ng-include'
+      ],
+      theseTypes = [],
+      type;
+
+  for (var i = 0; i < types.length; i++) {
+    type = types[i];
+    if (val = elt.attr(type)) {
+      theseTypes.push(type + '="' + val + '"');
+    }
+  }
+  if (theseTypes.length === 0) {
+    return 'scope.$id=' + scope.$id;
+  } else {
+    return theseTypes.join(' ');
+  }
 }
 
 function byScopeId (scope) {
