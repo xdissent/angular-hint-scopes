@@ -230,7 +230,6 @@ function decorateDollaCompile ($delegate) {
     return function (scope) {
       var elt = link.apply(this, arguments);
       var descriptor = scopeDescriptor(elt, scope);
-      console.log(scope.$id, descriptor, elt);
       hint.emit('scope:link', {
         id: scope.$id,
         descriptor: descriptor
