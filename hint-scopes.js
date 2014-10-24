@@ -250,10 +250,12 @@ function scopeDescriptor (elt, scope) {
       theseTypes = [],
       type;
 
-  for (var i = 0; i < types.length; i++) {
-    type = types[i];
-    if (val = elt.attr(type)) {
-      theseTypes.push(type + '="' + val + '"');
+  if (elt) {
+    for (var i = 0; i < types.length; i++) {
+      type = types[i];
+      if (val = elt.attr(type)) {
+        theseTypes.push(type + '="' + val + '"');
+      }
     }
   }
   if (theseTypes.length === 0) {
