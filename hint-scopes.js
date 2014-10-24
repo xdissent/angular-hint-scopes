@@ -133,14 +133,15 @@ function decorateRootScope($delegate, $parse) {
 
     hint.emit('scope:new', { parent: this.$id, child: child.$id });
     setTimeout(function () {
-      emitScopeElt(child.$id);
+      emitScopeElt(child);
     }, 0);
     return child;
   };
 
-  function emitScopeElt (scopeId) {
+  function emitScopeElt (scope) {
+    var scopeId = scope.$id;
     var elt = findElt(scopeId);
-    var descriptor = scopeDescriptor(elt);
+    var descriptor = scopeDescriptor(elt, scope);
     hint.emit('scope:link', {
       id: scopeId,
       descriptor: descriptor
