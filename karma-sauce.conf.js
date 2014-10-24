@@ -11,13 +11,13 @@ module.exports = function(config) {
       base: 'SauceLabs',
       browserName: 'firefox',
       version: '26'
-    },
-    'SL_Safari': {
-      base: 'SauceLabs',
-      browserName: 'safari',
-      platform: 'OS X 10.9',
-      version: '7'
-    }
+    }//,
+    // 'SL_Safari': {
+    //   base: 'SauceLabs',
+    //   browserName: 'safari',
+    //   platform: 'OS X 10.9',
+    //   version: '7'
+    // }
   };
   config.set({
     sauceLabs: {
