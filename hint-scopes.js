@@ -13,6 +13,8 @@ module.exports = angular.module('ngHintScopes', []).config(['$provide', function
 
 function decorateRootScope($delegate, $parse) {
 
+  var perf = window.performance || { now: function () { return 0; } };
+
   var scopes = {},
       watching = {};
 
@@ -67,9 +69,9 @@ function decorateRootScope($delegate, $parse) {
     var scopeId = this.$id;
     if (typeof watchExpression === 'function') {
       arguments[0] = function () {
-        var start = performance.now();
+        var start = perf.now();
         var ret = watchExpression.apply(this, arguments);
-        var end = performance.now();
+        var end = perf.now();
         hint.emit('scope:watch', {
           id: scopeId,
           watch: watchStr,
@@ -80,9 +82,9 @@ function decorateRootScope($delegate, $parse) {
     } else {
       var thatScope = this;
       arguments[0] = function () {
-        var start = performance.now();
+        var start = perf.now();
         var ret = thatScope.$eval(watchExpression);
-        var end = performance.now();
+        var end = perf.now();
         hint.emit('scope:watch', {
           id: scopeId,
           watch: watchStr,
@@ -95,9 +97,9 @@ function decorateRootScope($delegate, $parse) {
     if (typeof reactionFunction === 'function') {
       var applyStr = reactionFunction.toString();
       arguments[1] = function () {
-        var start = performance.now();
+        var start = perf.now();
         var ret = reactionFunction.apply(this, arguments);
-        var end = performance.now();
+        var end = perf.now();
         hint.emit('scope:reaction', {
           id: this.$id,
           watch: watchStr,
@@ -164,9 +166,9 @@ function decorateRootScope($delegate, $parse) {
 
   var _digest = scopePrototype.$digest;
   scopePrototype.$digest = function (fn) {
-    var start = performance.now();
+    var start = perf.now();
     var ret = _digest.apply(this, arguments);
-    var end = performance.now();
+    var end = perf.now();
     hint.emit('scope:digest', { id: this.$id, time: end - start });
     return ret;
   };
@@ -174,9 +176,9 @@ function decorateRootScope($delegate, $parse) {
 
   var _apply = scopePrototype.$apply;
   scopePrototype.$apply = function (fn) {
-    var start = performance.now();
+    var start = perf.now();
     var ret = _apply.apply(this, arguments);
-    var end = performance.now();
+    var end = perf.now();
     hint.emit('scope:apply', { id: this.$id, time: end - start });
     debouncedEmitModelChange(this);
     return ret;
