@@ -227,7 +227,7 @@ function decorateRootScope($delegate, $parse) {
 }
 
 function decorateDollaCompile ($delegate) {
-  return function () {
+  var decorated = function () {
     var link = $delegate.apply(this, arguments);
 
     return function (scope) {
@@ -239,7 +239,13 @@ function decorateDollaCompile ($delegate) {
       });
       return elt;
     }
-  }
+  };
+  Object.keys($delegate).forEach(function (method) {
+    if (typeof $delegate[method] === 'function') {
+      decorated[method] = $delegate[method].bind(decorated);
+    }
+  });
+  return decorated;
 }
 
 function scopeDescriptor (elt, scope) {
